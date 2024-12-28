@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyBank Chat</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e8f0fe;
+            flex-direction: column;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            width: 90%;
+            max-width: 1100px;
+            gap: 20px;
+            height: 75%;
+        }
+        .box {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            height: 100%;
+            flex: 1;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 15px;
+            font-family: 'Roboto', sans-serif;
+            color: #3b5998; /* Consistent heading color */
+        }
+
+        /* Suggestions Box */
+        #suggestions-box {
+            background-color: #f9f9f9;
+            border: 2px solid #007bff;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: 90%;
+        }
+        #suggestions-list {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .suggestion-item {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 14px;
+        }
+        .suggestion-item:hover {
+            background-color: lightgreen;
+            color: white;
+        }
+
+        /* Chat Box */
+        #chat-box {
+            background-color: #f9f9f9;
+            border: 2px solid #007bff;
+            height: 90%;
+        }
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 90%;
+            font-size: 14px;
+        }
+        .user-message {
+            background-color: #e0e0e0;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background-color:lightgreen;
+            color: white;
+            align-self: flex-start;
+        }
+        #input-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        #message-input {
+            width: 75%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+        #send-button {
+            width: 20%;
+            padding: 10px;
+            background-color: lightgreen;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #send-button:hover {
+            background-color: lightgreen;
+        }
+
+        /* Chat History Box */
+        #history-box {
+            background-color: #f9f9f9;
+            border: 2px solid #007bff;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: 90%;
+        }
+        #history-list {
+            margin-top: 10px;
+            overflow-y: auto;
+            max-height: calc(100% - 60px);
+        }
+        .history-item {
+            padding: 8px;
+            background-color: #f1f1f1;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 14px;
+        }
+        .history-item:hover {
+            background-color: lightgreen;
+            color: white;
+        }
+        #clear-button {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: lightgreen;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
+            display: none; /* Initially hidden */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #clear-button:hover {
+            background-color: lightgreen;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Suggestions Box -->
+        <div id="suggestions-box" class="box">
+            <h1>Suggestions</h1>
+            <div id="suggestions-list"></div>
+        </div>
+
+        <!-- Chat Box -->
+        <div id="chat-box" class="box">
+            <h1>EasyBank Chat</h1>
+            <div id="messages"></div>
+            <div id="input-container">
+                <input type="text" id="message-input" placeholder="Type your message...">
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+
+        <!-- Chat History Box -->
+        <div id="history-box" class="box">
+            <h1>Chat History</h1>
+            <div id="history-list"></div>
+            <button id="clear-button" onclick="clearHistory()">Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        const messageInput = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
+        const messagesDiv = document.getElementById("messages");
+        const suggestionsList = document.getElementById("suggestions-list");
+        const historyList = document.getElementById("history-list");
+        const clearButton = document.getElementById("clear-button");
+
+        const suggestions = [
+            "How can I open a new savings account?",
+            "How can I check my account balance?",
+            "What documents are required to apply for a personal loan?",
+            "How can I increase my credit card limit?"
+        ];
+
+        let chatHistory = [];
+
+        sendButton.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        // Display suggestions
+        function showSuggestions() {
+            suggestionsList.innerHTML = '';
+            suggestions.forEach((suggestion) => {
+                const suggestionItem = document.createElement("div");
+                suggestionItem.classList.add("suggestion-item");
+                suggestionItem.textContent = suggestion;
+                suggestionItem.addEventListener("click", () => {
+                    messageInput.value = suggestion;
+                    sendMessage();
+                });
+                suggestionsList.appendChild(suggestionItem);
+            });
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            displayMessage(message, "user-message");
+            messageInput.value = "";
+
+            chatHistory.push(message); // Store message in chat history
+            updateHistory();
+
+            fetch("http://127.0.0.1:8000/agent-assist/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: message }),
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    displayMessage(data.response || "Sorry, I didn't understand that.", "bot-message");
+                })
+                .catch((error) => {
+                    console.error("Error communicating with the server:", error);
+                    displayMessage("Error communicating with the server. Please try again.", "bot-message");
+                });
+        }
+
+        function displayMessage(message, type) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", type);
+            messageDiv.textContent = message;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function updateHistory() {
+            historyList.innerHTML = '';
+            chatHistory.forEach((historyItem) => {
+                const historyDiv = document.createElement("div");
+                historyDiv.classList.add("history-item");
+                historyDiv.textContent = historyItem;
+                historyList.appendChild(historyDiv);
+            });
+
+            if (chatHistory.length > 0) {
+                clearButton.style.display = "inline-block"; // Show clear button
+            } else {
+                clearButton.style.display = "none"; // Hide clear button
+            }
+        }
+
+        function clearHistory() {
+            chatHistory = [];
+            updateHistory();
+        }
+
+        showSuggestions();
+    </script>
+</body>
+</html>
